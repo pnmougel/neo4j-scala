@@ -6,7 +6,7 @@ import org.neo4jscala.jsonmappers.Neo4jJsonMapper
 /**
   * Created by nico on 17/09/17.
   */
-class Neo4jNode {
+abstract class Neo4jNode {
   var id: String = _
 
   var labels: Vector[String] = Vector(this.getClass.getSimpleName)
