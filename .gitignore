@@ -3,3 +3,4 @@ project/target
 macros/target
 src/main/scala/org/neo4jscala/Main.scala
 target/
+.graphDb
