@@ -4,6 +4,7 @@ import java.util.Date
 
 import org.neo4j.driver.v1.Value
 import org.neo4j.driver.v1.types.Node
+import org.neo4j.driver.v1.util.Function
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
@@ -14,15 +15,23 @@ import scala.collection.JavaConverters._
 /**
   * Created by nico on 19/09/17.
   */
-object NodeMapper {
-  def asIterator[T](v: Value, f: Value => T): Iterator[T] = {
-    asScalaIterator[T](v.asList[T]( e => f(e)).iterator())
-  }
-  def asSet[T](v: Value, f: Value => T) = asIterator(v, f).toSet
-  def asList[T](v: Value, f: Value => T) = asIterator(v, f).toList
-//  def asArray[T](v: Value, f: Value => T) = asIterator(v, f).toArray
 
-  def isOfType[T : TypeTag](typeToCheck: Type): Boolean = {
+object NodeMapper {
+  private def asIterator[T](v: Value, f: Value => T): Iterable[T] = {
+    val list = v.asList[T](new Function[Value, T] {
+      def apply(v: Value): T = {
+        f(v)
+      }
+    })
+    collectionAsScalaIterableConverter[T](list).asScala
+  }
+  private def asSet[T](v: Value, f: Value => T) = asIterator(v, f).toSet
+  private def asList[T](v: Value, f: Value => T) = asIterator(v, f).toList
+  private def asVector[T](v: Value, f: Value => T) = asIterator(v, f).toVector
+  private def asArray[T](v: Value, f: Value => T)(implicit m: Manifest[T]) = asIterator(v, f).toArray[T]
+  private def asSeq[T](v: Value, f: Value => T) = asIterator(v, f).toSeq
+
+  private def isOfType[T : TypeTag](typeToCheck: Type): Boolean = {
     val t = typeOf[T]
     t =:= typeToCheck || typeToCheck.typeArgs.exists(_ =:= t)
   }
@@ -31,7 +40,11 @@ object NodeMapper {
     val mappedValue = typeToCheck match {
       case t if t <:< typeOf[T] => f(value)
       case t if t <:< typeOf[Option[T]] => Some(f(value))
-      case t if t <:< typeOf[List[T]] => asList(value, f).asInstanceOf[AnyRef]
+      case t if t <:< typeOf[List[T]] => asList(value, f)
+      case t if t <:< typeOf[Set[T]] => asSet(value, f)
+      case t if t <:< typeOf[Vector[T]] => asVector(value, f)
+      case t if t <:< typeOf[Seq[T]] => asSeq(value, f)
+      case t if t <:< typeOf[Array[T]] => asArray(value, f)
       case _ => None
     }
     mappedValue.asInstanceOf[AnyRef]
@@ -59,10 +72,9 @@ object NodeMapper {
           case t if isOfType[Date](t) => handleType[Date](t, v, e => Neo4jDefaultDateFormat.dateFormat.parse(e.asString()))
 
             // Handle enumeration
-          case t if isEnumeration(t) => {
+          case t if isEnumeration(t) =>
             val enumerationAsString = v.asString()
             getEnumerationValues(t)(enumerationAsString)
-          }
         }
       } else if (defaultParams.contains(paramName)) {
         defaultParams(paramName)
@@ -70,10 +82,9 @@ object NodeMapper {
         p.typeSignature match {
           case t if t <:< typeOf[Option[_]] => None
           case t if t <:< typeOf[List[_]] => List()
-          case _ => {
+          case _ =>
             println("Unable to map field")
             None
-          }
         }
       }
     }
@@ -87,6 +98,7 @@ object NodeMapper {
     }).head
 
     inst.id = node.get("id").asString()
+    inst.labels = iterableAsScalaIterableConverter(node.labels()).asScala.toVector
     inst
   }
 
