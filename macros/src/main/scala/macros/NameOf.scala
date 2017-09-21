@@ -1,0 +1,55 @@
+package macros
+
+/**
+  * Created by nico on 19/09/17.
+  */
+trait NameOf {
+  import scala.language.experimental.macros
+
+  /**
+    * Obtain an identifier name as a constant string.
+    *
+    * Example usage:
+    * {{{
+    *   val amount = 5
+    *   nameOf(amount) => "amount"
+    * }}}
+    */
+  def $(expr: Any): String = macro NameOfImpl.nameOf
+
+  /**
+    * Obtain an identifier name as a constant string.
+    *
+    * This overload can be used to access an instance method without having an instance of the type.
+    *
+    * Example usage:
+    * {{{
+    *   class Person(val name: String)
+    *   nameOf[Person](_.name) => "name"
+    * }}}
+    */
+  def $[T](expr: T => Any): String = macro NameOfImpl.nameOf
+
+  /**
+    * Obtain a type's unqualified name as a constant string.
+    *
+    * Example usage:
+    * {{{
+    *   nameOfType[String] => "String"
+    *   nameOfType[fully.qualified.ClassName] => "ClassName"
+    * }}}
+    */
+  def nameOfType[T]: String = macro NameOfImpl.nameOfType[T]
+
+  /**
+    * Obtain a type's qualified name as a constant string.
+    *
+    * Example usage:
+    * {{{
+    *   nameOfType[String] => "java.lang.String"
+    *   nameOfType[fully.qualified.ClassName] => "fully.qualified.ClassName"
+    * }}}
+    */
+  def qualifiedNameOfType[T]: String = macro NameOfImpl.qualifiedNameOfType[T]
+}
+object NameOf extends NameOf
