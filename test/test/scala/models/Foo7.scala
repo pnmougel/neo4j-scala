@@ -12,6 +12,6 @@ import org.neo4jscala.core.{Neo4jNode, Neo4jRelation}
 case class Foo7(
   name: String,
   @JsonScalaEnumeration(classOf[MyEnumType])
-  enum: MyEnum) extends Neo4jNode {
+  enum: MyEnum) extends Neo4jNode[Foo7] {
     @transient val rels = new Neo4jRelation[Foo2]("xxx")
   }

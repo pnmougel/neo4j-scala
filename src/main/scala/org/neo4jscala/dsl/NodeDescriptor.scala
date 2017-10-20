@@ -1,30 +1,38 @@
 package org.neo4jscala.dsl
 
-import org.neo4jscala.core.{AnyNode, Neo4jNode}
+import org.neo4j.driver.v1.Value
+import org.neo4jscala.core.NodeMapper
 import org.neo4jscala.dsl.`match`.MatchTerm
 import org.neo4jscala.dsl.constraints._
 import org.neo4jscala.dsl.delete.DeleteTerm
-import org.neo4jscala.dsl.returns.ReturnTerm
-import org.neo4jscala.dsl.returns.returnable.{NodeReturnable, Returnable}
+import org.neo4jscala.dsl.returns.returnable.Returnable
 
 /**
   * Created by nico on 13/10/17.
   */
-case class NodeDescriptor(name: String, nodeLabels: Seq[String] = List()) extends MatchTerm with DeleteTerm {
+case class NodeDescriptor[T](name: String, nodeLabels: Seq[String] = List())(implicit mf: Manifest[T]) extends MatchTerm with DeleteTerm with Returnable[T] {
   var nodeLabelsMut: Seq[String] = nodeLabels
 
+  def get(v: Value):T = {
+    val node = v.asNode()
+    NodeMapper.as[T](node)
+  }
+//  def build: String
+
   def build = this.toString
+
+  def buildReturn = name
 
   /**
     * Add labels to the node
     * @param labels
     */
-  def labels(labels: String*): NodeDescriptor = {
+  def labels(labels: String*): NodeDescriptor[T] = {
     nodeLabelsMut ++= labels.toList
     this
   }
 
-  def :::(label: String): NodeDescriptor = {
+  def :::(label: String): NodeDescriptor[T] = {
     nodeLabelsMut = label :: nodeLabelsMut.toList
     this
   }
@@ -34,7 +42,7 @@ case class NodeDescriptor(name: String, nodeLabels: Seq[String] = List()) extend
 //    this
 //  }
 
-  def :+(label: String): NodeDescriptor = {
+  def :+(label: String): NodeDescriptor[T] = {
     nodeLabelsMut = label :: nodeLabelsMut.toList
     this
   }
@@ -59,7 +67,7 @@ case class NodeDescriptor(name: String, nodeLabels: Seq[String] = List()) extend
     * Replace the labels of the node
     * @param labels
     */
-  def withLabels(labels: String*): NodeDescriptor = {
+  def withLabels(labels: String*): NodeDescriptor[T] = {
     nodeLabelsMut = labels
     this
   }

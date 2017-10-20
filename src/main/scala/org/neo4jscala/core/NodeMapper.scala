@@ -49,7 +49,7 @@ object NodeMapper extends ReflectionUtilities {
     mappedValue.asInstanceOf[AnyRef]
   }
 
-  def as[T <: Neo4jNode](node: Node)(implicit tag: ClassTag[T], tt: TypeTag[T]): T = {
+  def as[T](node: Node)(implicit tag: ClassTag[T], tt: TypeTag[T]): T = {
     val cl2 = symbolOf[T].asClass
     val defaultParams = getFieldsDefaultParameters[T]
     val constructor = cl2.primaryConstructor.asMethod
@@ -85,10 +85,11 @@ object NodeMapper extends ReflectionUtilities {
     }
 
     val params = optParams
-    val inst = currentMirror.reflectClass(cl2).reflectConstructor(constructor)(params: _*).asInstanceOf[T]
+    val inst = currentMirror.reflectClass(cl2).reflectConstructor(constructor)(params: _*).asInstanceOf[Neo4jNode[_]]
 
+//    inst.asInstanceOf[Neo4jNode[T]]
     inst.id = node.get("id").asString()
     inst.nodeLabels = iterableAsScalaIterableConverter(node.labels()).asScala.toVector
-    inst
+    inst.asInstanceOf[T]
   }
 }

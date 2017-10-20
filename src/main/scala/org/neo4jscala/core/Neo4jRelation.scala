@@ -9,7 +9,7 @@ import scala.collection.mutable
 /**
   * Created by nico on 21/09/17.
   */
-class Neo4jRelation[T <: Neo4jNode](label: String)(implicit source: Neo4jNode, mf: Manifest[T]) extends Neo4jRunnable {
+class Neo4jRelation[T <: Neo4jNode[T]](label: String)(implicit source: Neo4jNode[_], mf: Manifest[T]) extends Neo4jRunnable {
   var nodes = mutable.HashSet[T]()
 
   def add(target: T): Neo4jStatement[Unit] = {

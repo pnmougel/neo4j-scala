@@ -4,10 +4,16 @@ import java.util.UUID
 
 import org.neo4jscala.Neo4jClient
 import org.neo4jscala.jsonmappers.Neo4jJsonMapper
+
+import scala.reflect.ClassTag
 /**
   * Created by nico on 17/09/17.
   */
-trait Neo4jNode extends Neo4jRunnable {
+
+
+class Neo4jNode[T](implicit mf1: Manifest[T], tag: ClassTag[T]) extends Neo4jRunnable {
+
+  def build = ""
 
   private var _id: Option[String] = None
 
@@ -22,11 +28,11 @@ trait Neo4jNode extends Neo4jRunnable {
     _id = Some(value)
   }
 
-  var nodeLabels: Vector[String] = Vector(this.getClass.getSimpleName)
+  var nodeLabels: Vector[String] = Vector(this.getClass.toString)
 
-  @transient implicit val source: Neo4jNode = this
+  @transient implicit val source: Neo4jNode[_] = this
 
-  def create[T <: Neo4jNode]() : Neo4jStatement[T] = {
+  def create[T <: Neo4jNode[_]]() : Neo4jStatement[T] = {
     val properties = Neo4jJsonMapper.mapper.writeValueAsString(this)
     new BaseNeo4jStatement[T](s"CREATE (${nodeLabels.map(label => s":$label").mkString} $properties)", (_) => {
       this.asInstanceOf[T]
@@ -34,7 +40,7 @@ trait Neo4jNode extends Neo4jRunnable {
   }
 
 
-  def doCreate[T <: Neo4jNode]()(implicit client: Neo4jClient) = {
+  def doCreate[T <: Neo4jNode[_]]()(implicit client: Neo4jClient) = {
     run(create[T]())
   }
 }

@@ -55,11 +55,4 @@ case class WhereExpressionUnary(term: String, field: Field) extends WhereTerm {
   def build = s"${field.name} $term"
 }
 
-case class StringField(name: String) extends ComparableFieldOperation[String] with StringFieldOperation {
-  override val beforeValue: String = "'"
-  override val afterValue: String = "'"
-}
-
-case class IntField(name: String) extends ComparableFieldOperation[Int]
-
 case class AnyField(name: String) extends ComparableFieldOperation[Any]

@@ -5,7 +5,8 @@ package org.neo4jscala.macros
   */
 
 import org.neo4jscala.core.Neo4jNode
-import org.neo4jscala.dsl.{IntField, NodeDescriptor, StringField}
+import org.neo4jscala.dsl.NodeDescriptor
+import org.neo4jscala.dsl._
 
 import scala.annotation.tailrec
 import scala.reflect.macros.blackbox.Context
@@ -28,28 +29,56 @@ object NameOfImpl {
     }
   }
 
-  def nodeDescriptorBuilder(c: Context)(expr: c.Expr[Neo4jNode]): c.Expr[NodeDescriptor] = {
+//  def nodeDescriptorBuilder[T: c.WeakTypeTag](c: Context)(expr: c.Expr[Neo4jNode[_]]): c.Expr[String] = {
+//    import c.universe._
+//
+//    val name = extract(c)(expr.tree, expr)
+//    val typeSymbol = expr.tree.tpe.typeSymbol
+//    val typeName = typeSymbol.name.toTypeName
+//    val label = List(typeSymbol.name.decodedName.toString).filter(_ != "AnyNode")
+//
+//    val t = c.weakTypeOf[T].typeSymbol.name.toTypeName
+//
+//    reify {
+//      c.Expr[String] {
+//        Literal(Constant(s"NodeDescriptor[Foo2]($name, $label)"))
+////        q""""""
+//      }.splice
+//    }
+//  }
+
+  def nodeDescriptorBuilder[T: c.WeakTypeTag](c: Context)(expr: c.Expr[Neo4jNode[_]]): c.Expr[NodeDescriptor[T]] = {
     import c.universe._
 
     val name = extract(c)(expr.tree, expr)
-    val label = List(expr.tree.tpe.typeSymbol.name.decodedName.toString).filter(_ != "AnyNode")
+    val typeSymbol = expr.tree.tpe.typeSymbol
+    val typeName = typeSymbol.name.toTypeName
+    val label = List(typeSymbol.name.decodedName.toString).filter(_ != "AnyNode")
+
     reify {
-      c.Expr[NodeDescriptor] {
-        q"NodeDescriptor($name, $label)"
+      c.Expr[NodeDescriptor[T]] {
+        q"NodeDescriptor[$typeName]($name, $label)"
       }.splice
     }
   }
 
-  def stringFieldDescriptorBuilder(c: Context)(expr: c.Expr[String]): c.Expr[StringField] = {
+  def stringExpressionBuilder(c: Context)(expr: c.Expr[String]): c.Expr[StringExpression] = {
     import c.universe._
-    val name = extract(c)(expr.tree, expr)
-    reify(c.Expr[StringField](q"StringField($name)").splice)
+    val name = expr.tree match {
+      case Literal(Constant(name)) => name.toString
+      case _ => extract(c)(expr.tree, expr)
+    }
+    reify(c.Expr[StringExpression](q"StringExpression($name)").splice)
   }
 
-  def intFieldDescriptorBuilder(c: Context)(expr: c.Expr[Int]): c.Expr[IntField] = {
+  def intExpressionBuilder(c: Context)(expr: c.Expr[Int]): c.Expr[IntExpression] = {
     import c.universe._
-    val name = extract(c)(expr.tree, expr)
-    reify(c.Expr[IntField](q"IntField($name)").splice)
+
+    val name = expr.tree match {
+      case Literal(Constant(name)) => name.toString
+      case _ => extract(c)(expr.tree, expr)
+    }
+    reify(c.Expr[IntExpression](q"""IntExpression($name)""").splice)
   }
 
 //  def nameOf2(c: Context)(expr: c.Expr[Any]): c.Expr[String] = {

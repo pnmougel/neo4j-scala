@@ -1,7 +1,8 @@
 package org.neo4jscala.macros
 
 import org.neo4jscala.core.Neo4jNode
-import org.neo4jscala.dsl.{IntField, NodeDescriptor, StringField}
+import org.neo4jscala.dsl.NodeDescriptor
+import org.neo4jscala.dsl._
 
 /**
   * Created by nico on 19/09/17.
@@ -20,14 +21,15 @@ trait Macros {
     */
 //  def $(expr: Any): String = macro NameOfImpl.nameOf2
 
-  implicit def node(expr: Neo4jNode): NodeDescriptor = macro NameOfImpl.nodeDescriptorBuilder
+  implicit def node[T](expr: Neo4jNode[T]): NodeDescriptor[T] = macro NameOfImpl.nodeDescriptorBuilder[T]
 
-  implicit def field(expr: String): StringField = macro NameOfImpl.stringFieldDescriptorBuilder
-  implicit def field(expr: Int): IntField = macro NameOfImpl.intFieldDescriptorBuilder
+  implicit def field(expr: String): StringExpression = macro NameOfImpl.stringExpressionBuilder
 
-  def $(expr: String): StringField = macro NameOfImpl.stringFieldDescriptorBuilder
-  def $(expr: Int): IntField = macro NameOfImpl.intFieldDescriptorBuilder
-  def $(expr: Neo4jNode): NodeDescriptor = macro NameOfImpl.nodeDescriptorBuilder
+  implicit def field(expr: Int): IntExpression = macro NameOfImpl.intExpressionBuilder
+
+  def $(expr: String): StringExpression = macro NameOfImpl.stringExpressionBuilder
+  def $(expr: Int): IntExpression = macro NameOfImpl.intExpressionBuilder
+//  def $(expr: Neo4jNode[_]): NodeDescriptor[_] = macro NameOfImpl.nodeDescriptorBuilder
 
 
 //  /**

@@ -8,7 +8,7 @@ import scala.collection.JavaConversions.asScalaIterator
 /**
   * Created by nico on 10/10/17.
   */
-case class ByIdStmt[T <: Neo4jNode](id: String)(implicit manifest: scala.reflect.Manifest[T]) extends Neo4jStatement[T]() {
+case class ByIdStmt[T <: Neo4jNode[T]](id: String)(implicit manifest: scala.reflect.Manifest[T]) extends Neo4jStatement[T]() {
   val stmt = {
     val className = manifest.runtimeClass.getSimpleName
     s"MATCH (a:$className) WHERE a.id = '$id' RETURN a"
@@ -19,7 +19,7 @@ case class ByIdStmt[T <: Neo4jNode](id: String)(implicit manifest: scala.reflect
   }
 }
 
-case class SearchAllStmt[T <: Neo4jNode](implicit manifest: scala.reflect.Manifest[T]) extends Neo4jStatement[Iterator[T]]() {
+case class SearchAllStmt[T <: Neo4jNode[T]](implicit manifest: scala.reflect.Manifest[T]) extends Neo4jStatement[Iterator[T]]() {
   val stmt = {
     val className = manifest.runtimeClass.getSimpleName
     s"MATCH (a:${className}) RETURN a"
@@ -33,8 +33,8 @@ case class SearchAllStmt[T <: Neo4jNode](implicit manifest: scala.reflect.Manife
 }
 
 trait SearchDsl {
-  def byId[T <: Neo4jNode](id: String)(implicit mf: Manifest[T]): Neo4jStatement[T] = ByIdStmt[T](id)
-  def all[T <: Neo4jNode](implicit mf: Manifest[T]): Neo4jStatement[Iterator[T]] = SearchAllStmt[T]
+  def byId[T <: Neo4jNode[T]](id: String)(implicit mf: Manifest[T]): Neo4jStatement[T] = ByIdStmt[T](id)
+  def all[T <: Neo4jNode[T]](implicit mf: Manifest[T]): Neo4jStatement[Iterator[T]] = SearchAllStmt[T]
 }
 
 

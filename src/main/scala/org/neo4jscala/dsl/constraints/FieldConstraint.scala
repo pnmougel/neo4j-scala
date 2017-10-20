@@ -21,7 +21,7 @@ case class NodeKeyFieldConstraint(fields: Field*) extends FieldConstraint {
   def build = s"(${fields.map(_.name).mkString(", ")}) IS NODE KEY"
 }
 
-case class ConstraintTerm(node: NodeDescriptor, fieldConstraint: FieldConstraint) extends CypherTerm {
+case class ConstraintTerm(node: NodeDescriptor[_], fieldConstraint: FieldConstraint) extends CypherTerm {
   def build = s"$node ASSERT ${fieldConstraint.build()}"
 }
 
